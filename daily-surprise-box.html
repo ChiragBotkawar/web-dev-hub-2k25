@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Surprise Box 🎁</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Poppins", sans-serif; }
+    body {
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh; background: linear-gradient(135deg, #5a2d82, #00b4db);
+      overflow: hidden; color: #fff; flex-direction: column;
+    }
+    h1 { font-size: 2rem; margin-bottom: 20px; text-align: center; }
+    .box {
+      width: 140px; height: 140px; background: #ff4081; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4); cursor: pointer;
+      transition: transform 0.3s ease; position: relative;
+    }
+    .box:hover { transform: scale(1.08); }
+    .box::before {
+      content: ""; position: absolute; width: 100%; height: 100%;
+      border-radius: 16px; background: rgba(255,255,255,0.2);
+      animation: pulse 2s infinite alternate;
+    }
+    @keyframes pulse {
+      from { box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+      to { box-shadow: 0 0 25px rgba(255,255,255,0.6); }
+    }
+    .surprise {
+      max-width: 80%; text-align: center; font-size: 1.2rem;
+      background: rgba(255,255,255,0.1); padding: 1rem 1.5rem;
+      border-radius: 12px; margin-top: 20px; display: none;
+      animation: fadeIn 0.7s ease forwards;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .button {
+      background: #fff; color: #222; border: none; padding: 10px 16px;
+      border-radius: 8px; cursor: pointer; margin-top: 15px;
+      font-weight: 600; transition: background 0.3s;
+    }
+    .button:hover { background: #eee; }
+    canvas { position: fixed; top: 0; left: 0; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <h1>🎁 Open Your Daily Surprise!</h1>
+  <div class="box" id="giftBox">🎁</div>
+  <div class="surprise" id="surprise"></div>
+  <button class="button" id="shareBtn" style="display:none;">Share on Twitter</button>
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const surprises = [
+      "🌟 'The best way to get started is to quit talking and begin doing.' – Walt Disney",
+      "😂 Why do Java developers wear glasses? Because they don’t see sharp!",
+      "💡 Fun Fact: Honey never spoils. Archaeologists found 3000-year-old honey still edible!",
+      "🎬 'Life is what happens when you're busy making other plans.' – John Lennon",
+      "⚡ Quick Tip: Small daily improvements lead to big results.",
+      "🔥 'Don’t watch the clock; do what it does. Keep going.' – Sam Levenson"
+    ];
+
+    const giftBox = document.getElementById("giftBox");
+    const surpriseDiv = document.getElementById("surprise");
+    const shareBtn = document.getElementById("shareBtn");
+    const confettiCanvas = document.getElementById("confetti");
+    const ctx = confettiCanvas.getContext("2d");
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    let confetti = [];
+
+    const createConfetti = () => {
+      for (let i = 0; i < 100; i++) {
+        confetti.push({
+          x: Math.random() * confettiCanvas.width,
+          y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+          r: Math.random() * 6 + 2,
+          d: Math.random() * 2 + 1,
+          color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+          tilt: Math.random() * 10 - 10
+        });
+      }
+    };
+
+    const drawConfetti = () => {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confetti.forEach(c => {
+        ctx.beginPath();
+        ctx.fillStyle = c.color;
+        ctx.ellipse(c.x, c.y, c.r, c.r / 2, c.tilt, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      updateConfetti();
+    };
+
+    const updateConfetti = () => {
+      confetti.forEach(c => {
+        c.y += c.d;
+        c.x += Math.sin(c.tilt);
+        if (c.y > confettiCanvas.height) {
+          c.y = -10;
+          c.x = Math.random() * confettiCanvas.width;
+        }
+      });
+      requestAnimationFrame(drawConfetti);
+    };
+
+    const showSurprise = () => {
+      const today = new Date().toDateString();
+      const lastOpen = localStorage.getItem("lastOpen");
+      if (lastOpen === today) {
+        const saved = localStorage.getItem("surprise");
+        surpriseDiv.textContent = `You've already opened today's surprise:\n\n${saved}`;
+        surpriseDiv.style.display = "block";
+        shareBtn.style.display = "inline-block";
+        return;
+      }
+
+      const surprise = surprises[Math.floor(Math.random() * surprises.length)];
+      localStorage.setItem("lastOpen", today);
+      localStorage.setItem("surprise", surprise);
+      surpriseDiv.textContent = surprise;
+      surpriseDiv.style.display = "block";
+      shareBtn.style.display = "inline-block";
+      createConfetti();
+      drawConfetti();
+      setTimeout(() => confetti = [], 5000);
+    };
+
+    giftBox.addEventListener("click", showSurprise);
+
+    shareBtn.addEventListener("click", () => {
+      const text = encodeURIComponent(localStorage.getItem("surprise"));
+      const url = `https://twitter.com/intent/tweet?text=${text} %23DailySurprise`;
+      window.open(url, "_blank");
+    });
+  </script>
+</body>
+</html>
